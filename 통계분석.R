@@ -36,18 +36,18 @@ head(af_age)
 customer_wage <- customer %>% filter(grepl('만원+',분류코드별))
 customer_wage
 
-customer_base <- customer_age[1:2]
-bf_age <- customer_age[3:27]
-af_age <- customer_age[28:36]
+customer_base <- customer_wage[1:2]
+bf_wage <- customer_wage[3:27]
+af_wage <- customer_wage[28:36]
 
-bf_age <- customer_base %>% bind_cols(bf_age)
-af_age <- customer_base %>% bind_cols(af_age)
+bf_wage <- customer_base %>% bind_cols(bf_wage)
+af_wage <- customer_base %>% bind_cols(af_wage)
 
-bf_age <- bf_age %>% cbind(data.frame(평균 = apply(bf_age[, 3:27], 1, mean)))
-af_age <- af_age %>% cbind(data.frame(평균 = apply(af_age[, 3:11], 1, mean)))
+bf_wage <- bf_wage %>% cbind(data.frame(평균 = apply(bf_wage[, 3:27], 1, mean)))
+af_wage <- af_wage %>% cbind(data.frame(평균 = apply(af_wage[, 3:11], 1, mean)))
 
-head(bf_age)
-head(af_age)
+head(bf_wage)
+head(af_wage)
 
 draw_bargraph = function(before, after, category) {
   before <- before %>% 
@@ -63,7 +63,8 @@ draw_bargraph = function(before, after, category) {
   df <- bf_hal %>% bind_rows(af_hal)
   graph = ggplot(df , aes(x = 분류코드별, y = 평균, fill = group)) + 
     geom_bar(stat = "identity",position = "dodge") +
-    labs(x = "연령", y = "CSI평균") +
+    labs(x = "Category", y = "CSI평균") +
+    theme(axis.text.x = element_text(angle = 45, hjust=1)) +
     ggtitle(category) + 
     coord_cartesian(ylim = c(min(df$평균) - 10, max(df$평균) + 10))
   
@@ -71,16 +72,33 @@ draw_bargraph = function(before, after, category) {
 }
 
 unique(bf_age[1])
-categories_age <- c("가계수입전망CSI","소비지출전망CSI","가계저축전망CSI")
-categories_wage <- c("가계수입전망CSI","소비지출전망CSI","가계저축전망CSI")
+category_age = c('가계수입전망CSI',
+                 '가계저축전망CSI', '주택가격전망CSI',
+                 '여행비 지출전망CSI', '교육비 지출전망CSI')
 
-draw_bargraph(bf_age, af_age, "취업기회전망CSI")
+category_wage = c('가계수입전망CSI',
+                  '가계저축전망CSI', '주택가격전망CSI',
+                  '여행비 지출전망CSI', '의료·보건비 지출전망CSI','교양·오락·문화생활비 지출전망CSI')
+
+age_graph_list <- list()
+wage_graph_list <- list()
+
+for (i in 1:length(category_age)){
+  age_graph_list[[i]] = draw_bargraph(bf_age, af_age, category_age[i])
+}
+
+for (i in 1:length(category_wage)){
+  wage_graph_list[[i]] = draw_bargraph(bf_wage, af_wage, category_age[i])
+}
 
 
+do.call("grid.arrange", c(age_graph_list, ncol=3, nrow=2))
 
 # 여기서부터는 연령별 CSI 종류 분산분석
 #_-------------------------------------------------------------------------------
 
+customer <- read_excel("월별소비자동향조사.xlsx")
+head(customer)
 
 data1 <- customer %>%
   filter(분류코드별 %in% c('자영업자', '봉급생활자')) %>% 
@@ -95,11 +113,13 @@ data1$분류코드별 = as.factor(data1$분류코드별)
 data1_b <- data1[c(1:240), ]
 data1_a <- data1[c(241:340), ]
 
-category = c('가계수입전망CSI', '현재가계저축CSI',
+category_age = c('가계수입전망CSI',
              '가계저축전망CSI', '주택가격전망CSI',
-             '소비지출전망CSI', '의료·보건비 지출전망CSI',
-             '교양·오락·문화생활비 지출전망CSI', '의류비 지출전망CSI',
-             '외식비 지출전망CSI', '여행비 지출전망CSI', '교육비 지출전망CSI')
+             '여행비 지출전망CSI', '교육비 지출전망CSI')
+
+category_wage = c('가계수입전망CSI',
+                  '가계저축전망CSI', '주택가격전망CSI',
+                  '여행비 지출전망CSI', '의료·보건비 지출전망CSI','교양·오락·문화생활비 지출전망CSI')
 
 data_wage <- customer %>%
   filter(grepl('만원+',분류코드별)) %>% 
@@ -145,22 +165,22 @@ anova_result = function(df, category) {
   
 }
 
-anova_result_before = anova_result(df=data2_b, category=category)
-anova_result_after = anova_result(df=data2_a, category=category)
+anova_result_before = anova_result(df=data2_b, category=category_age)
+anova_result_after = anova_result(df=data2_a, category=category_age)
 
-anova_result_before_wage = anova_result(df = data_wage_b, category = category)
-anova_result_after_wage = anova_result(df = data_wage_a, category = category)
+anova_result_before_wage = anova_result(df = data_wage_b, category = category_wage)
+anova_result_after_wage = anova_result(df = data_wage_a, category = category_wage)
 
-for (i in 1:length(category)){
-  cat('\n', category[i], '에 대한 분산분석 결과입니다.\n\n')
+for (i in 1:length(category_age)){
+  cat('\n', category_age[i], '에 대한 분산분석 결과입니다.\n\n')
   print(anova_result_before$summary[[i]])
   print(anova_result_before$posthoc[[i]])
   print(anova_result_after$summary[[i]])
   print(anova_result_after$posthoc[[i]])
 }
 
-for (i in 1:length(category)){
-  cat('\n', category[i], '에 대한 분산분석 결과입니다.\n\n')
+for (i in 1:length(category_wage)){
+  cat('\n', category_wage[i], '에 대한 분산분석 결과입니다.\n\n')
   print(anova_result_before_wage$summary[[i]])
   print(anova_result_before_wage$posthoc[[i]])
   print(anova_result_after_wage$summary[[i]])
