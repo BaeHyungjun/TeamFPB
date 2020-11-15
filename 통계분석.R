@@ -8,7 +8,20 @@ library(agricolae)
 #install.packages("gridExtra")
 #install.packages("reshape2")
 
-## 그래프 그리기 근데 아직 하나밖에 안함 그래프도 만들예정
+# 소비자 심리지수 비교
+customer <- read_excel("월별소비자동향조사.xlsx")
+CCSI <- customer %>% 
+  filter(customer$지수코드별 == "소비자심리지수") %>% 
+  select(-c("항목","단위","분류코드별")) %>% 
+  melt(id.vars = "지수코드별")
+
+CCSI_bf <- CCSI[1:25,2:3]
+CCSI_af <- CCSI[26:34,2:3]
+
+var.test(CCSI_bf$value,CCSI_af$value)
+t.test(CCSI_bf$value,CCSI_af$value, var.equal = FALSE, alternative = "greater")
+
+# bargraph 그린 곳.
 customer <- read_excel("월별소비자동향조사.xlsx")
 head(customer)
 
@@ -88,10 +101,11 @@ for (i in 1:length(category_age)){
 }
 
 for (i in 1:length(category_wage)){
-  wage_graph_list[[i]] = draw_bargraph(bf_wage, af_wage, category_age[i])
+  wage_graph_list[[i]] = draw_bargraph(bf_wage, af_wage, category_wage[i])
 }
 
 
+do.call("grid.arrange", c(wage_graph_list, ncol=3, nrow=2))
 do.call("grid.arrange", c(age_graph_list, ncol=3, nrow=2))
 
 # 여기서부터는 연령별 CSI 종류 분산분석
