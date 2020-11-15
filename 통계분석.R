@@ -32,6 +32,11 @@ customer<-customer %>%
 customer_age <- customer %>% filter(grepl('세+',분류코드별))
 customer_age
 
+customer_age$지수코드별 = as.factor(customer_age$지수코드별)
+customer_age$분류코드별 = as.factor(customer_age$분류코드별)
+
+customer_age$분류코드별 <- relevel(customer_age$분류코드별,"40세미만")
+
 customer_base <- customer_age[1:2]
 bf_age <- customer_age[3:27]
 af_age <- customer_age[28:36]
@@ -45,9 +50,19 @@ af_age <- af_age %>% cbind(data.frame(평균 = apply(af_age[, 3:11], 1, mean)))
 head(bf_age)
 head(af_age)
 
+category <- c("가계수입전망CSI","현재가계저축CSI","가계저축전망CSI",
+              "주택가격전망CSI","소비지출전망CSI",
+              "의료·보건비 지출전망CSI","교양·오락·문화생활비 지출전망CSI",
+              "의류비 지출전망CSI","외식비 지출전망CSI","여행비 지출전망CSI", 
+              "교육비 지출전망CSI")
+
 # 소득별 데이터 전처리
 customer_wage <- customer %>% filter(grepl('만원+',분류코드별))
 customer_wage
+
+customer_wage$지수코드별 = as.factor(customer_wage$지수코드별)
+customer_wage$분류코드별 = as.factor(customer_wage$분류코드별)
+customer_wage$분류코드별 <- relevel(customer_wage$분류코드별,"100만원미만")
 
 customer_base <- customer_wage[1:2]
 bf_wage <- customer_wage[3:27]
@@ -84,8 +99,7 @@ draw_bargraph = function(before, after, category) {
   return(graph)
 }
 
-unique(bf_age[1])
-category_age = c('가계수입전망CSI',
+category_age = c('가계수입전망CSI', '의료·보건비 지출전망CSI',
                  '가계저축전망CSI', '주택가격전망CSI',
                  '여행비 지출전망CSI', '교육비 지출전망CSI')
 
@@ -127,9 +141,9 @@ data1$분류코드별 = as.factor(data1$분류코드별)
 data1_b <- data1[c(1:240), ]
 data1_a <- data1[c(241:340), ]
 
-category_age = c('가계수입전망CSI',
-             '가계저축전망CSI', '주택가격전망CSI',
-             '여행비 지출전망CSI', '교육비 지출전망CSI')
+category_age = c('가계수입전망CSI', '의료·보건비 지출전망CSI',
+                 '가계저축전망CSI', '주택가격전망CSI',
+                 '여행비 지출전망CSI', '교육비 지출전망CSI')
 
 category_wage = c('가계수입전망CSI',
                   '가계저축전망CSI', '주택가격전망CSI',
@@ -142,11 +156,10 @@ data_wage <- customer %>%
   melt(id.vars=c('지수코드별', '분류코드별')) %>% 
   mutate(지수코드별 = as.factor(지수코드별), 분류코드별 = as.factor(분류코드별))
 
-dim(data_wage)
-which(data_wage$variable == "2020. 02 월")
-
 data_wage_b <- data_wage[c(1:1650), ]
-data_wage_a <- data_wage[c(1650:2244), ]
+data_wage_a <- data_wage[c(1651:2244), ]
+
+data_wage_b
 
 data2 <- customer %>%
   filter(grepl('세+',분류코드별)) %>% 
